@@ -1200,3 +1200,139 @@ footer {
     flex-direction: column;
   }
 }
+
+/* ================================
+   LOCATION PICKER
+================================ */
+
+.location-picker {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.location-picker-header {
+  margin-bottom: 18px;
+}
+
+.location-picker-header h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.location-picker-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.location-actions {
+  margin-bottom: 12px;
+}
+
+.location-action-button {
+  border: none;
+  border-radius: 8px;
+  padding: 11px 16px;
+  background: #5146e5;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.location-action-button:hover {
+  opacity: 0.92;
+}
+
+.location-search {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.location-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid #dbe2ea;
+  border-radius: 8px;
+  outline: none;
+  font-size: 14px;
+}
+
+.location-search input:focus {
+  border-color: #5146e5;
+}
+
+.location-search button {
+  border: none;
+  border-radius: 8px;
+  padding: 0 18px;
+  background: #0b0d2b;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.location-search button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.map-wrapper {
+  overflow: hidden;
+  border: 1px solid #dbe2ea;
+  border-radius: 12px;
+}
+
+.location-instruction {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.selected-location {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 13px 15px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.selected-location-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #5146e5;
+  color: white;
+  font-weight: 700;
+}
+
+.selected-location strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.selected-location p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.location-error {
+  margin-top: 12px;
+  padding: 11px 13px;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 13px;
+}

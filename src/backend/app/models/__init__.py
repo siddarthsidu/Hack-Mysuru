@@ -5,6 +5,7 @@ from app.models.complaint import Complaint
 from app.models.routing import RoutingDecision
 from app.models.user import User
 from app.models.notification import Notification
+from app.models.evidence import Evidence
 
 __all__ = [
     "Authority",
@@ -12,4 +13,6 @@ __all__ = [
     "Jurisdiction",
     "Complaint",
     "RoutingDecision",
+    "User",
+    "Notification",
 ]

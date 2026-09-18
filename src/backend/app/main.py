@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers.auth import router as auth_router
-
+from app.routers import notifications
+from app.routers import evidence
 from app.database import Base, engine
 from app.models import (
     Authority,
@@ -11,7 +12,7 @@ from app.models import (
     RoutingDecision,
 )
 from app.routers.complaints import router as complaints_router
-
+from app.routers import priority
 
 app = FastAPI(
     title="HackMysuru CivicRoute API",
@@ -37,7 +38,9 @@ Base.metadata.create_all(bind=engine)
 
 app.include_router(complaints_router)
 app.include_router(auth_router)
-
+app.include_router(notifications.router)
+app.include_router(evidence.router)
+app.include_router(priority.router)
 
 @app.get("/")
 def root():
