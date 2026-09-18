@@ -4,7 +4,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Complaint
+from app.models import (
+    Authority,
+    BoundaryVersion,
+    Complaint,
+    Jurisdiction,
+    RoutingDecision,
+)
 from app.schemas.complaint import ComplaintCreate
 from app.services.routing_service import route_complaint
 
@@ -137,16 +143,136 @@ def create_complaint(
         "routing": routing,
     }
 
+@router.patch("/{complaint_id}/status")
+def update_complaint_status(
+    complaint_id: int,
+    status: str,
+    db: Session = Depends(get_db),
+):
+    allowed_statuses = {
+        "submitted",
+        "routed",
+        "in_progress",
+        "resolved",
+    }
+
+    if status not in allowed_statuses:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Invalid status. Allowed values: "
+                "submitted, routed, in_progress, resolved"
+            ),
+        )
+
+    complaint = (
+        db.query(Complaint)
+        .filter(Complaint.id == complaint_id)
+        .first()
+    )
+
+    if not complaint:
+        raise HTTPException(
+            status_code=404,
+            detail="Complaint not found",
+        )
+
+    complaint.status = status
+
+    db.commit()
+    db.refresh(complaint)
+
+    return {
+        "id": complaint.id,
+        "status": complaint.status,
+        "message": "Complaint status updated successfully",
+    }
 
 @router.get("/")
 def get_complaints(
     db: Session = Depends(get_db),
 ):
-    return (
+    complaints = (
         db.query(Complaint)
         .order_by(Complaint.reported_at.desc())
         .all()
     )
+
+    results = []
+
+    for complaint in complaints:
+        routing = (
+            db.query(RoutingDecision)
+            .filter(
+                RoutingDecision.complaint_id == complaint.id
+            )
+            .order_by(RoutingDecision.created_at.desc())
+            .first()
+        )
+
+        authority = None
+        jurisdiction = None
+        boundary_version = None
+
+        if routing:
+            authority = (
+                db.query(Authority)
+                .filter(Authority.id == routing.authority_id)
+                .first()
+            )
+
+            jurisdiction = (
+                db.query(Jurisdiction)
+                .filter(Jurisdiction.id == routing.jurisdiction_id)
+                .first()
+            )
+
+            boundary_version = (
+                db.query(BoundaryVersion)
+                .filter(
+                    BoundaryVersion.id
+                    == routing.boundary_version_id
+                )
+                .first()
+            )
+
+        results.append(
+            {
+                "id": complaint.id,
+                "title": complaint.title,
+                "description": complaint.description,
+                "issue_type": complaint.issue_type,
+                "latitude": complaint.latitude,
+                "longitude": complaint.longitude,
+                "status": complaint.status,
+                "priority": complaint.priority,
+                "reported_at": complaint.reported_at,
+                "routing": (
+                    {
+                        "authority": authority.name
+                        if authority
+                        else None,
+                        "authority_type": authority.authority_type
+                        if authority
+                        else None,
+                        "jurisdiction": jurisdiction.name
+                        if jurisdiction
+                        else None,
+                        "boundary_version": (
+                            boundary_version.version_name
+                            if boundary_version
+                            else None
+                        ),
+                        "confidence": routing.confidence,
+                        "reason": routing.reason,
+                    }
+                    if routing
+                    else None
+                ),
+            }
+        )
+
+    return results
 
 
 @router.post("/{complaint_id}/route")
