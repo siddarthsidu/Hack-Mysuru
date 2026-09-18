@@ -1,3 +1,4 @@
+from datetime import date
 from math import radians, sin, cos, sqrt, atan2
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -12,7 +13,10 @@ from app.models import (
     RoutingDecision,
 )
 from app.schemas.complaint import ComplaintCreate
-from app.services.routing_service import route_complaint
+from app.services.routing_service import (
+    find_route,
+    route_complaint,
+)
 
 
 router = APIRouter(
@@ -28,22 +32,22 @@ def calculate_distance_meters(
     lon2: float,
 ) -> float:
     """
-    Calculate approximate distance between two GPS coordinates.
-    Uses the Haversine formula.
+    Calculate approximate distance between two GPS coordinates
+    using the Haversine formula.
     """
 
     earth_radius = 6371000
 
-    lat1 = radians(lat1)
-    lat2 = radians(lat2)
+    lat1_rad = radians(lat1)
+    lat2_rad = radians(lat2)
 
-    delta_lat = radians(lat2 - lat1)
-    delta_lon = radians(lon2 - radians(lon1))
+    delta_lat = lat2_rad - lat1_rad
+    delta_lon = radians(lon2 - lon1)
 
     a = (
         sin(delta_lat / 2) ** 2
-        + cos(lat1)
-        * cos(lat2)
+        + cos(lat1_rad)
+        * cos(lat2_rad)
         * sin(delta_lon / 2) ** 2
     )
 
@@ -56,10 +60,16 @@ def find_duplicate(
     db: Session,
     complaint_data: ComplaintCreate,
 ):
+    """
+    Detect whether a similar complaint already exists
+    within 100 meters.
+    """
+
     complaints = (
         db.query(Complaint)
         .filter(
-            Complaint.issue_type == complaint_data.issue_type
+            Complaint.issue_type
+            == complaint_data.issue_type
         )
         .all()
     )
@@ -94,6 +104,10 @@ def create_complaint(
     complaint_data: ComplaintCreate,
     db: Session = Depends(get_db),
 ):
+    """
+    Create a civic complaint, check for duplicates,
+    and automatically route it to the responsible authority.
+    """
 
     # Check for possible duplicate
     duplicate_check = find_duplicate(
@@ -118,7 +132,7 @@ def create_complaint(
     db.commit()
     db.refresh(complaint)
 
-    # Only route normally if it is not a duplicate
+    # Route only if it is not a duplicate
     routing = None
 
     if not duplicate_check["duplicate"]:
@@ -143,12 +157,17 @@ def create_complaint(
         "routing": routing,
     }
 
+
 @router.patch("/{complaint_id}/status")
 def update_complaint_status(
     complaint_id: int,
     status: str,
     db: Session = Depends(get_db),
 ):
+    """
+    Update the workflow status of a complaint.
+    """
+
     allowed_statuses = {
         "submitted",
         "routed",
@@ -167,7 +186,9 @@ def update_complaint_status(
 
     complaint = (
         db.query(Complaint)
-        .filter(Complaint.id == complaint_id)
+        .filter(
+            Complaint.id == complaint_id
+        )
         .first()
     )
 
@@ -188,25 +209,37 @@ def update_complaint_status(
         "message": "Complaint status updated successfully",
     }
 
+
 @router.get("/")
 def get_complaints(
     db: Session = Depends(get_db),
 ):
+    """
+    Return complaints together with their latest
+    routing decision and authority information.
+    """
+
     complaints = (
         db.query(Complaint)
-        .order_by(Complaint.reported_at.desc())
+        .order_by(
+            Complaint.reported_at.desc()
+        )
         .all()
     )
 
     results = []
 
     for complaint in complaints:
+
         routing = (
             db.query(RoutingDecision)
             .filter(
-                RoutingDecision.complaint_id == complaint.id
+                RoutingDecision.complaint_id
+                == complaint.id
             )
-            .order_by(RoutingDecision.created_at.desc())
+            .order_by(
+                RoutingDecision.created_at.desc()
+            )
             .first()
         )
 
@@ -215,15 +248,22 @@ def get_complaints(
         boundary_version = None
 
         if routing:
+
             authority = (
                 db.query(Authority)
-                .filter(Authority.id == routing.authority_id)
+                .filter(
+                    Authority.id
+                    == routing.authority_id
+                )
                 .first()
             )
 
             jurisdiction = (
                 db.query(Jurisdiction)
-                .filter(Jurisdiction.id == routing.jurisdiction_id)
+                .filter(
+                    Jurisdiction.id
+                    == routing.jurisdiction_id
+                )
                 .first()
             )
 
@@ -249,15 +289,21 @@ def get_complaints(
                 "reported_at": complaint.reported_at,
                 "routing": (
                     {
-                        "authority": authority.name
-                        if authority
-                        else None,
-                        "authority_type": authority.authority_type
-                        if authority
-                        else None,
-                        "jurisdiction": jurisdiction.name
-                        if jurisdiction
-                        else None,
+                        "authority": (
+                            authority.name
+                            if authority
+                            else None
+                        ),
+                        "authority_type": (
+                            authority.authority_type
+                            if authority
+                            else None
+                        ),
+                        "jurisdiction": (
+                            jurisdiction.name
+                            if jurisdiction
+                            else None
+                        ),
                         "boundary_version": (
                             boundary_version.version_name
                             if boundary_version
@@ -275,14 +321,73 @@ def get_complaints(
     return results
 
 
+@router.get("/route-preview")
+def route_preview(
+    latitude: float,
+    longitude: float,
+    report_date: date,
+    db: Session = Depends(get_db),
+):
+    """
+    Preview which authority would be responsible for a
+    location based on a specific date.
+
+    This does not create a complaint or routing decision.
+    It is used to demonstrate jurisdiction changes over time.
+    """
+
+    # Validate latitude
+    if not -90 <= latitude <= 90:
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid latitude.",
+        )
+
+    # Validate longitude
+    if not -180 <= longitude <= 180:
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid longitude.",
+        )
+
+    routing = find_route(
+        db,
+        latitude,
+        longitude,
+        report_date,
+    )
+
+    if not routing:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "No jurisdiction found for this "
+                "location and date."
+            ),
+        )
+
+    return {
+        "latitude": latitude,
+        "longitude": longitude,
+        "report_date": report_date,
+        "routing": routing,
+    }
+
+
 @router.post("/{complaint_id}/route")
 def route_existing_complaint(
     complaint_id: int,
     db: Session = Depends(get_db),
 ):
+    """
+    Manually route an existing complaint.
+    """
+
     complaint = (
         db.query(Complaint)
-        .filter(Complaint.id == complaint_id)
+        .filter(
+            Complaint.id == complaint_id
+        )
         .first()
     )
 
@@ -300,7 +405,10 @@ def route_existing_complaint(
     if not routing:
         raise HTTPException(
             status_code=422,
-            detail="Could not determine jurisdiction for this location",
+            detail=(
+                "Could not determine jurisdiction "
+                "for this location"
+            ),
         )
 
     return {

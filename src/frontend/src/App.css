@@ -950,3 +950,253 @@ footer {
     flex-direction: column;
   }
 }
+
+/* BOUNDARY SIMULATOR */
+
+.boundary-simulator {
+  margin-bottom: 28px;
+  border: 1px solid #dce4ef;
+  border-radius: 17px;
+  background: white;
+  overflow: hidden;
+}
+
+.simulator-header {
+  padding: 22px 24px;
+  border-bottom: 1px solid #e8ebf1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.simulator-header h3 {
+  margin-top: 7px;
+  color: #1d2939;
+  font-size: 18px;
+}
+
+.simulator-header p {
+  margin-top: 5px;
+  color: #7d8798;
+  font-size: 12px;
+}
+
+.version-indicator {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border-radius: 20px;
+  background: #f0fdf4;
+  color: #15803d;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.version-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+}
+
+.simulator-grid {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 0;
+}
+
+.simulator-form {
+  padding: 23px 24px;
+  border-right: 1px solid #edf0f4;
+}
+
+.simulator-form .form-group {
+  margin-bottom: 15px;
+}
+
+.simulator-form label {
+  display: block;
+  margin-bottom: 6px;
+  color: #667085;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.simulator-form input {
+  width: 100%;
+  padding: 10px 11px;
+  border: 1px solid #dce2eb;
+  border-radius: 8px;
+  outline: none;
+  color: #344054;
+  background: white;
+  font-size: 12px;
+}
+
+.simulator-form input:focus {
+  border-color: #2563eb;
+}
+
+.simulate-button {
+  width: 100%;
+  margin-top: 4px;
+  border: none;
+  border-radius: 8px;
+  padding: 11px;
+  background: #172554;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.simulate-button:hover {
+  background: #1e3a8a;
+}
+
+.simulate-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.simulator-result {
+  min-height: 310px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+}
+
+.simulator-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  color: #9aa3b2;
+}
+
+.simulator-empty svg {
+  margin-bottom: 5px;
+}
+
+.simulator-empty strong {
+  color: #667085;
+  font-size: 13px;
+}
+
+.simulator-empty span {
+  max-width: 350px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.simulator-error {
+  width: 100%;
+  padding: 14px;
+  border-radius: 9px;
+  background: #fff7ed;
+  color: #c2410c;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.preview-result {
+  width: 100%;
+}
+
+.preview-success {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #15803d;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.preview-result h4 {
+  margin-top: 9px;
+  color: #182235;
+  font-size: 24px;
+}
+
+.preview-type {
+  display: inline-block;
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.preview-details {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.preview-details div {
+  padding: 11px 12px;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.preview-details span {
+  display: block;
+  color: #8992a2;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.preview-details strong {
+  display: block;
+  margin-top: 4px;
+  color: #344054;
+  font-size: 11px;
+}
+
+.preview-reason {
+  margin-top: 14px;
+  padding: 11px 12px;
+  border-left: 3px solid #2563eb;
+  background: #f8fafc;
+  color: #667085;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.preview-reason svg {
+  flex-shrink: 0;
+  color: #2563eb;
+  margin-top: 1px;
+}
+
+@media (max-width: 800px) {
+  .simulator-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .simulator-form {
+    border-right: none;
+    border-bottom: 1px solid #edf0f4;
+  }
+
+  .simulator-header {
+    align-items: flex-start;
+    gap: 12px;
+    flex-direction: column;
+  }
+}

@@ -556,6 +556,52 @@ function Dashboard() {
     (item) => item.status === "resolved"
   ).length;
 
+    const [preview, setPreview] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState("");
+
+  const [previewForm, setPreviewForm] = useState({
+    latitude: "12.2958",
+    longitude: "76.6394",
+    report_date: "2026-08-15",
+  });
+
+  const runBoundaryPreview = async () => {
+    setPreviewLoading(true);
+    setPreviewError("");
+    setPreview(null);
+
+    try {
+      const params = new URLSearchParams({
+        latitude: previewForm.latitude,
+        longitude: previewForm.longitude,
+        report_date: previewForm.report_date,
+      });
+
+      const response = await fetch(
+        `${API_URL}/api/complaints/route-preview?${params}`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.detail ||
+            "Could not determine jurisdiction."
+        );
+      }
+
+      setPreview(data);
+    } catch (err) {
+      setPreviewError(
+        err.message ||
+          "Boundary preview failed."
+      );
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
   return (
     <main className="dashboard">
       <div className="dashboard-header">
@@ -614,7 +660,180 @@ function Dashboard() {
           <span>{error}</span>
         </div>
       )}
+            <section className="boundary-simulator">
+        <div className="simulator-header">
+          <div>
+            <div className="eyebrow">
+              <Route size={16} />
+              JURISDICTION SIMULATOR
+            </div>
 
+            <h3>Boundary Change Simulator</h3>
+
+            <p>
+              See how the responsible authority changes when
+              jurisdiction boundaries change over time.
+            </p>
+          </div>
+
+          <div className="version-indicator">
+            <span className="version-dot"></span>
+            Time-aware routing
+          </div>
+        </div>
+
+        <div className="simulator-grid">
+          <div className="simulator-form">
+            <div className="form-group">
+              <label>Latitude</label>
+
+              <input
+                type="number"
+                step="any"
+                value={previewForm.latitude}
+                onChange={(event) =>
+                  setPreviewForm({
+                    ...previewForm,
+                    latitude: event.target.value,
+                  })
+                }
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Longitude</label>
+
+              <input
+                type="number"
+                step="any"
+                value={previewForm.longitude}
+                onChange={(event) =>
+                  setPreviewForm({
+                    ...previewForm,
+                    longitude: event.target.value,
+                  })
+                }
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Complaint Date</label>
+
+              <input
+                type="date"
+                value={previewForm.report_date}
+                onChange={(event) =>
+                  setPreviewForm({
+                    ...previewForm,
+                    report_date: event.target.value,
+                  })
+                }
+              />
+            </div>
+
+            <button
+              className="simulate-button"
+              onClick={runBoundaryPreview}
+              disabled={previewLoading}
+            >
+              {previewLoading ? (
+                <>
+                  <Loader2
+                    size={17}
+                    className="spinner"
+                  />
+                  Checking...
+                </>
+              ) : (
+                <>
+                  <Route size={17} />
+                  Check Responsibility
+                </>
+              )}
+            </button>
+          </div>
+
+          <div className="simulator-result">
+            {!preview && !previewError && (
+              <div className="simulator-empty">
+                <Route size={30} />
+                <strong>
+                  Select a date to simulate routing
+                </strong>
+                <span>
+                  The system will use the boundary version
+                  effective on that date.
+                </span>
+              </div>
+            )}
+
+            {previewError && (
+              <div className="simulator-error">
+                <AlertCircle size={20} />
+                <span>{previewError}</span>
+              </div>
+            )}
+
+            {preview && (
+              <div className="preview-result">
+                <div className="preview-success">
+                  <CheckCircle2 size={21} />
+                  ROUTING DETERMINED
+                </div>
+
+                <h4>
+                  {preview.routing.authority}
+                </h4>
+
+                <span className="preview-type">
+                  {preview.routing.authority_type}
+                </span>
+
+                <div className="preview-details">
+                  <div>
+                    <span>Jurisdiction</span>
+                    <strong>
+                      {preview.routing.jurisdiction}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Boundary Version</span>
+                    <strong>
+                      {preview.routing.boundary_version}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Confidence</span>
+                    <strong>
+                      {Math.round(
+                        preview.routing.confidence * 100
+                      )}
+                      %
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Report Date</span>
+                    <strong>
+                      {preview.report_date}
+                    </strong>
+                  </div>
+                </div>
+
+                <div className="preview-reason">
+                  <Route size={16} />
+                  <span>
+                    {preview.routing.reason}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+      
       <section className="complaints-section">
         <div className="section-header">
           <div>
