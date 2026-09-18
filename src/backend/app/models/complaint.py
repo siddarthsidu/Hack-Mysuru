@@ -2,6 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import DateTime, Float, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import ForeignKey
 
 from app.database import Base
 
@@ -11,6 +12,12 @@ class Complaint(Base):
 
     id: Mapped[int] = mapped_column(
         primary_key=True,
+        index=True,
+    )
+
+    user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=True,
         index=True,
     )
 

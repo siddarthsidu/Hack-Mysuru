@@ -12,6 +12,7 @@ from app.models import (
     Jurisdiction,
     RoutingDecision,
 )
+
 from app.schemas.complaint import ComplaintCreate
 from app.services.routing_service import (
     find_route,
@@ -115,6 +116,24 @@ def create_complaint(
         complaint_data,
     )
 
+    # Reject duplicate complaint
+    if duplicate_check["duplicate"]:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "message": "Possible duplicate complaint detected.",
+                "duplicate_complaint_id": duplicate_check[
+                    "existing_complaint_id"
+                ],
+                "distance_meters": duplicate_check[
+                    "distance_meters"
+                ],
+                "reason": duplicate_check[
+                    "reason"
+                ],
+            },
+        )
+
     # Create complaint
     complaint = Complaint(
         title=complaint_data.title,
@@ -124,22 +143,15 @@ def create_complaint(
         longitude=complaint_data.longitude,
     )
 
-    # Mark possible duplicate without rejecting the report
-    if duplicate_check["duplicate"]:
-        complaint.status = "possible_duplicate"
-
     db.add(complaint)
     db.commit()
     db.refresh(complaint)
 
-    # Route only if it is not a duplicate
-    routing = None
-
-    if not duplicate_check["duplicate"]:
-        routing = route_complaint(
-            db,
-            complaint,
-        )
+    # Route complaint
+    routing = route_complaint(
+        db,
+        complaint,
+    )
 
     return {
         "complaint": {
